@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Stocks Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-controls button {
+            padding: 10px 20px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .sort-controls button:hover {
+            background: #764ba2;
+        }
+
+        .sort-controls button.active {
+            background: #764ba2;
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #efefef;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .stock-symbol {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .positive {
+            color: #27ae60;
+            font-weight: 500;
+        }
+
+        .negative {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .badge-buy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-hold {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-sell {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-results {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .recommendations-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .recommendations-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .recommend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .recommend-card {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .recommend-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .recommend-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .recommend-card p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .stock-list {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .stock-list li {
+            color: #667eea;
+            font-weight: 500;
+            margin: 5px 0;
+            list-style-position: inside;
+        }
+
+        .tip-box {
+            background: #e8f4f8;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            color: #0c5460;
+        }
+
+        .tip-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .sort-controls {
+                width: 100%;
+            }
+
+            .sort-controls button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 Indian Stocks Dashboard</h1>
+            <p>Track top-performing stocks in the Indian market</p>
+        </header>
+
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <h3>Total Stocks</h3>
+                <div class="value" id="totalStocks">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Return</h3>
+                <div class="value" id="avgReturn">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Top Gainer</h3>
+                <div class="value" id="topGainer">--</div>
+            </div>
+        </div>
+
+        <div class="recommendations-section">
+            <h2>💡 Investment Recommendations</h2>
+            <div class="recommend-grid">
+                <div class="recommend-card">
+                    <h3>🚀 Best for Growth</h3>
+                    <p>High-growth potential stocks with strong upward momentum. Ideal for long-term investors with moderate to high risk tolerance.</p>
+                    <div class="stock-list">
+                        <ul>
+                            <li><strong>BHARTIARTL</strong> - 22.0% Return</li>
+                            <li><strong>HCL Tech</strong> - 15.2% Return</li>
+                            <li><strong>L&T</strong> - 18.9% Return</li>
+                        </ul>
+                    </div>
+                    <div class="tip-box">
+                        <strong>📌 Tip:</strong> These companies show strong growth trajectories and are ideal for portfolio growth.
+                    </div>
+                </div>
+
+                <div class="recommend-card">
+                    <h3>🏆 Best for Beginners</h3>
+                    <p>Large-cap, stable stocks with strong fundamentals. Lower risk, consistent performance, good for first-time investors.</p>
+                    <div class="stock-list">
+                        <ul>
+                            <li><strong>TCS</strong> - 12.5% Return</li>
+                            <li><strong>INFY</strong> - 8.3% Return</li>
+                            <li><strong>ITC</strong> - 9.5% Return</li>
+                        </ul>
+                    </div>
+                    <div class="tip-box">
+                        <strong>📌 Tip:</strong> These are blue-chip companies with proven track records and dividend-paying businesses.
+                    </div>
+                </div>
+
+                <div class="recommend-card">
+                    <h3>⚖️ Balanced Portfolio</h3>
+                    <p>Mix of stable and growth stocks. Offers both capital appreciation and regular income. Moderate risk-reward balance.</p>
+                    <div class="stock-list">
+                        <ul>
+                            <li><strong>TCS</strong> + <strong>BHARTIARTL</strong></li>
+                            <li><strong>INFY</strong> + <strong>L&T</strong></li>
+                            <li><strong>ITC</strong> + <strong>HCL Tech</strong></li>
+                        </ul>
+                    </div>
+                    <div class="tip-box">
+                        <strong>📌 Tip:</strong> Combine stable performers with growth stocks for a well-diversified portfolio.
+                    </div>
+                </div>
+
+                <div class="recommend-card">
+                    <h3>⏸️ Hold & Watch</h3>
+                    <p>Established companies in consolidation phase. Good for long-term holding but limited near-term growth expected.</p>
+                    <div class="stock-list">
+                        <ul>
+                            <li><strong>WIPRO</strong> - 5.8% Return</li>
+                            <li><strong>MARUTI</strong> - 2.3% Return</li>
+                            <li><strong>RELIANCE</strong> - -3.5% Return</li>
+                        </ul>
+                    </div>
+                    <div class="tip-box">
+                        <strong>📌 Tip:</strong> These may offer better entry points or are suitable for SIP (Systematic Investment Plan) strategies.
+                    </div>
+                </div>
+
+                <div class="recommend-card">
+                    <h3>⚠️ High Risk/Caution</h3>
+                    <p>Stocks showing negative returns. Requires careful analysis before investing. Only for experienced investors.</p>
+                    <div class="stock-list">
+                        <ul>
+                            <li><strong>BAJAJFINSV</strong> - -5.2% Return</li>
+                            <li><strong>RELIANCE</strong> - -3.5% Return</li>
+                        </ul>
+                    </div>
+                    <div class="tip-box">
+                        <strong>📌 Tip:</strong> Research market conditions and company fundamentals before investing in these sectors.
+                    </div>
+                </div>
+
+                <div class="recommend-card">
+                    <h3>📋 Investor Tips</h3>
+                    <p>Remember: Past performance doesn't guarantee future results. Always do your own research.</p>
+                    <div style="margin-top: 15px; color: #555; line-height: 1.8;">
+                        <p>✓ Start with SIP for regular investments</p>
+                        <p>✓ Diversify across sectors</p>
+                        <p>✓ Follow a long-term strategy</p>
+                        <p>✓ Review portfolio quarterly</p>
+                        <p>✓ Consult a financial advisor</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by symbol or name...">
+            </div>
+            <div class="sort-controls">
+                <button id="sortPriceBtn" data-sort="price">Sort by Price</button>
+                <button id="sortReturnBtn" data-sort="return">Sort by Return</button>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Company Name</th>
+                        <th>Current Price (₹)</th>
+                        <th>52W High (₹)</th>
+                        <th>52W Low (₹)</th>
+                        <th>Return (%)</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody id="stocksTable">
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No stocks found matching your search.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample Indian Stock Data
+        const stocks = [
+            {
+                symbol: 'TCS',
+                name: 'Tata Consultancy Services',
+                price: 3845.50,
+                high52w: 4250.00,
+                low52w: 2800.00,
+                return: 12.5,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'INFY',
+                name: 'Infosys Limited',
+                price: 1680.45,
+                high52w: 1920.00,
+                low52w: 1350.00,
+                return: 8.3,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'WIPRO',
+                name: 'Wipro Limited',
+                price: 420.65,
+                high52w: 550.00,
+                low52w: 350.00,
+                return: 5.8,
+                recommendation: 'hold'
+            },
+            {
+                symbol: 'HCLTECH',
+                name: 'HCL Technologies',
+                price: 1695.00,
+                high52w: 1950.00,
+                low52w: 1250.00,
+                return: 15.2,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'RELIANCE',
+                name: 'Reliance Industries',
+                price: 2850.00,
+                high52w: 3200.00,
+                low52w: 2400.00,
+                return: -3.5,
+                recommendation: 'hold'
+            },
+            {
+                symbol: 'BHARTIARTL',
+                name: 'Bharti Airtel',
+                price: 975.50,
+                high52w: 1180.00,
+                low52w: 800.00,
+                return: 22.0,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'ITC',
+                name: 'ITC Limited',
+                price: 385.75,
+                high52w: 450.00,
+                low52w: 310.00,
+                return: 9.5,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'LT',
+                name: 'Larsen & Toubro',
+                price: 3520.00,
+                high52w: 4050.00,
+                low52w: 2850.00,
+                return: 18.9,
+                recommendation: 'buy'
+            },
+            {
+                symbol: 'MARUTI',
+                name: 'Maruti Suzuki',
+                price: 10265.45,
+                high52w: 11500.00,
+                low52w: 7800.00,
+                return: 2.3,
+                recommendation: 'hold'
+            },
+            {
+                symbol: 'BAJAJFINSV',
+                name: 'Bajaj Finserv',
+                price: 14580.00,
+                high52w: 16500.00,
+                low52w: 11200.00,
+                return: -5.2,
+                recommendation: 'sell'
+            }
+        ];
+
+        let filteredStocks = [...stocks];
+        let currentSort = null;
+
+        // Initialize dashboard
+        function initDashboard() {
+            renderTable();
+            updateStats();
+            setupEventListeners();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('stocksTable');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredStocks.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            tbody.innerHTML = filteredStocks.map(stock => `
+                <tr>
+                    <td><span class="stock-symbol">${stock.symbol}</span></td>
+                    <td>${stock.name}</td>
+                    <td>₹ ${stock.price.toFixed(2)}</td>
+                    <td>₹ ${stock.high52w.toFixed(2)}</td>
+                    <td>₹ ${stock.low52w.toFixed(2)}</td>
+                    <td class="${stock.return >= 0 ? 'positive' : 'negative'}">
+                        ${stock.return >= 0 ? '+' : ''}${stock.return.toFixed(2)}%
+                    </td>
+                    <td>
+                        <span class="badge badge-${stock.recommendation}">
+                            ${stock.recommendation.toUpperCase()}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalStocks').textContent = filteredStocks.length;
+            
+            const avgReturn = (filteredStocks.reduce((sum, stock) => sum + stock.return, 0) / filteredStocks.length).toFixed(2);
+            document.getElementById('avgReturn').textContent = `${avgReturn}%`;
+            
+            const topGainer = filteredStocks.reduce((max, stock) => stock.return > max.return ? stock : max);
+            document.getElementById('topGainer').textContent = topGainer.symbol;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                filteredStocks = stocks.filter(stock =>
+                    stock.symbol.toLowerCase().includes(query) ||
+                    stock.name.toLowerCase().includes(query)
+                );
+                renderTable();
+                updateStats();
+            });
+
+            document.getElementById('sortPriceBtn').addEventListener('click', (e) => {
+                const btn = e.target;
+                if (currentSort === 'price') {
+                    filteredStocks.reverse();
+                    currentSort = null;
+                    btn.classList.remove('active');
+                } else {
+                    filteredStocks.sort((a, b) => b.price - a.price);
+                    currentSort = 'price';
+                    btn.classList.add('active');
+                    document.getElementById('sortReturnBtn').classList.remove('active');
+                }
+                renderTable();
+            });
+
+            document.getElementById('sortReturnBtn').addEventListener('click', (e) => {
+                const btn = e.target;
+                if (currentSort === 'return') {
+                    filteredStocks.reverse();
+                    currentSort = null;
+                    btn.classList.remove('active');
+                } else {
+                    filteredStocks.sort((a, b) => b.return - a.return);
+                    currentSort = 'return';
+                    btn.classList.add('active');
+                    document.getElementById('sortPriceBtn').classList.remove('active');
+                }
+                renderTable();
+            });
+        }
+
+        // Start the dashboard
+        initDashboard();
+    </script>
+</body>
+</html>
